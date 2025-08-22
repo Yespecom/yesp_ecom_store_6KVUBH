@@ -211,6 +211,18 @@ export async function register(userData: {
   recaptchaToken?: string
 }): Promise<AuthResponse | null> {
   try {
+    if (!userData.name || userData.name.trim().length < 2) {
+      throw new Error("Name must be at least 2 characters long")
+    }
+
+    if (!userData.email || !userData.email.includes("@")) {
+      throw new Error("Please enter a valid email address")
+    }
+
+    if (!userData.password || userData.password.length < 6) {
+      throw new Error("Password must be at least 6 characters long")
+    }
+
     console.log("[v0] Registration attempt with data:", {
       ...userData,
       password: "[REDACTED]",
@@ -226,12 +238,36 @@ export async function register(userData: {
     })
 
     console.log("[v0] Registration response status:", response.status)
+    console.log("[v0] Registration response headers:", Object.fromEntries(response.headers.entries()))
 
     const data = await response.json()
     console.log("[v0] Registration response data:", data)
 
     if (!response.ok) {
-      throw new Error(data.message || `HTTP error! status: ${response.status}`)
+      let errorMessage = "Registration failed"
+
+      if (response.status === 400) {
+        if (data.message) {
+          errorMessage = data.message
+        } else if (data.error) {
+          errorMessage = data.error
+        } else if (data.errors && Array.isArray(data.errors)) {
+          errorMessage = data.errors.join(", ")
+        } else {
+          errorMessage = "Invalid registration data. Please check your information and try again."
+        }
+      } else if (response.status === 409) {
+        errorMessage = "An account with this email already exists. Please try logging in instead."
+      } else if (response.status === 422) {
+        errorMessage = "Please check your information and try again."
+      } else if (response.status >= 500) {
+        errorMessage = "Server error. Please try again later."
+      } else {
+        errorMessage = data.message || data.error || `Registration failed (${response.status})`
+      }
+
+      console.error("[v0] Registration failed:", errorMessage)
+      throw new Error(errorMessage)
     }
 
     if (data.token && data.customer) {
@@ -250,13 +286,14 @@ export async function register(userData: {
         token: data.token,
       }
 
+      console.log("[v0] Registration successful, user data:", authResponse.user)
       return authResponse
     }
 
     // If no token or customer, throw error
     throw new Error(data.message || "Registration failed - missing required data")
   } catch (error) {
-    console.error("Error registering:", error)
+    console.error("[v0] Error registering:", error)
     throw error
   }
 }
