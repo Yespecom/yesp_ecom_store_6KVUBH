@@ -234,16 +234,30 @@ export async function register(userData: {
       throw new Error(data.message || `HTTP error! status: ${response.status}`)
     }
 
-    if (data.success) {
+    if (data.token && data.customer) {
       localStorage.setItem("auth_token", data.token)
-      return data
+
+      // Transform API response to match expected AuthResponse format
+      const authResponse: AuthResponse = {
+        success: true,
+        message: data.message || "Registration successful",
+        user: {
+          id: data.customer._id || data.customer.id,
+          name: data.customer.name,
+          email: data.customer.email,
+          phone: data.customer.phone,
+        },
+        token: data.token,
+      }
+
+      return authResponse
     }
 
-    // If success is false, throw the specific error message
-    throw new Error(data.message || "Registration failed")
+    // If no token or customer, throw error
+    throw new Error(data.message || "Registration failed - missing required data")
   } catch (error) {
     console.error("Error registering:", error)
-    throw error // Re-throw the error instead of returning null
+    throw error
   }
 }
 
@@ -263,16 +277,32 @@ export async function login(email: string, password: string): Promise<AuthRespon
       throw new Error(data.message || `HTTP error! status: ${response.status}`)
     }
 
-    if (data.success) {
+    if (data.token && (data.customer || data.user)) {
       localStorage.setItem("auth_token", data.token)
-      return data
+
+      const customerData = data.customer || data.user
+
+      // Transform API response to match expected AuthResponse format
+      const authResponse: AuthResponse = {
+        success: true,
+        message: data.message || "Login successful",
+        user: {
+          id: customerData._id || customerData.id,
+          name: customerData.name,
+          email: customerData.email,
+          phone: customerData.phone,
+        },
+        token: data.token,
+      }
+
+      return authResponse
     }
 
-    // If success is false, throw the specific error message
-    throw new Error(data.message || "Login failed")
+    // If no token or user data, throw error
+    throw new Error(data.message || "Login failed - missing required data")
   } catch (error) {
     console.error("Error logging in:", error)
-    throw error // Re-throw the error instead of returning null
+    throw error
   }
 }
 
