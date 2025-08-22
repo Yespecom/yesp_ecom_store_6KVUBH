@@ -20,11 +20,17 @@ import { useAuth } from "@/hooks/use-auth"
 
 const loadRecaptchaScript = async () => {
   return new Promise<string>((resolve, reject) => {
-    if (window.grecaptcha) {
+    if (window.grecaptcha && window.grecaptcha.ready) {
       // If already loaded, fetch the site key from backend
       fetch("/api/recaptcha-config")
         .then((res) => res.json())
-        .then((data) => resolve(data.siteKey))
+        .then((data) => {
+          if (data.siteKey) {
+            resolve(data.siteKey)
+          } else {
+            reject(new Error("No site key received from server"))
+          }
+        })
         .catch(reject)
       return
     }
@@ -33,10 +39,25 @@ const loadRecaptchaScript = async () => {
     fetch("/api/recaptcha-config")
       .then((res) => res.json())
       .then((data) => {
+        if (!data.siteKey) {
+          throw new Error("No site key received from server")
+        }
+
         const siteKey = data.siteKey
         const script = document.createElement("script")
         script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`
-        script.onload = () => resolve(siteKey)
+
+        script.onload = () => {
+          if (window.grecaptcha && window.grecaptcha.ready) {
+            window.grecaptcha.ready(() => {
+              console.log("[v0] reCAPTCHA script loaded and ready")
+              resolve(siteKey)
+            })
+          } else {
+            reject(new Error("reCAPTCHA script loaded but grecaptcha object not available"))
+          }
+        }
+
         script.onerror = () => reject(new Error("Failed to load reCAPTCHA script"))
         document.head.appendChild(script)
       })
@@ -48,12 +69,21 @@ export function AuthDialog() {
   const [isOpen, setIsOpen] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [siteKey, setSiteKey] = useState<string>("")
+  const [recaptchaLoading, setRecaptchaLoading] = useState(true)
   const { login, register, isLoading, error } = useAuth()
 
   useEffect(() => {
+    setRecaptchaLoading(true)
     loadRecaptchaScript()
-      .then((key) => setSiteKey(key))
-      .catch(console.error)
+      .then((key) => {
+        setSiteKey(key)
+        setRecaptchaLoading(false)
+        console.log("[v0] reCAPTCHA initialized successfully")
+      })
+      .catch((error) => {
+        console.error("[v0] reCAPTCHA initialization failed:", error)
+        setRecaptchaLoading(false)
+      })
   }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -82,10 +112,23 @@ export function AuthDialog() {
 
     try {
       if (!siteKey) {
-        throw new Error("reCAPTCHA site key not loaded")
+        throw new Error("reCAPTCHA configuration not loaded. Please refresh the page and try again.")
       }
 
+      if (!window.grecaptcha || !window.grecaptcha.execute) {
+        throw new Error("reCAPTCHA service not available. Please check your internet connection and try again.")
+      }
+
+      if (recaptchaLoading) {
+        throw new Error("reCAPTCHA is still loading. Please wait a moment and try again.")
+      }
+
+      console.log("[v0] Executing reCAPTCHA with site key:", siteKey)
       const recaptchaToken = await window.grecaptcha.execute(siteKey, { action: "register" })
+
+      if (!recaptchaToken) {
+        throw new Error("Failed to generate reCAPTCHA token. Please try again.")
+      }
 
       console.log("[v0] reCAPTCHA v3 token generated for registration")
 
@@ -221,7 +264,13 @@ export function AuthDialog() {
 
               {error && <p className="text-sm text-red-600">{error}</p>}
 
-              <Button type="submit" className="w-full bg-green-600 hover:bg-green-700" disabled={isLoading}>
+              {recaptchaLoading && <p className="text-sm text-gray-500">Loading security verification...</p>}
+
+              <Button
+                type="submit"
+                className="w-full bg-green-600 hover:bg-green-700"
+                disabled={isLoading || recaptchaLoading}
+              >
                 {isLoading ? "Creating account..." : "Create Account"}
               </Button>
             </form>
