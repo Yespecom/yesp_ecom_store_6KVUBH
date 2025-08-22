@@ -263,18 +263,29 @@ export async function register(userData: {
 
 export async function login(email: string, password: string): Promise<AuthResponse | null> {
   try {
+    console.log("[v0] Login attempt with:", { email, password: password ? "[PROVIDED]" : "[MISSING]" })
+
+    const requestBody = { email, password }
+    console.log("[v0] Login request body:", { email, password: "[REDACTED]" })
+
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(requestBody),
     })
 
+    console.log("[v0] Login response status:", response.status)
+    console.log("[v0] Login response headers:", Object.fromEntries(response.headers.entries()))
+
     const data = await response.json()
+    console.log("[v0] Login response data:", data)
 
     if (!response.ok) {
-      throw new Error(data.message || `HTTP error! status: ${response.status}`)
+      const errorMessage = data.message || data.error || `HTTP error! status: ${response.status}`
+      console.error("[v0] Login failed with error:", errorMessage)
+      throw new Error(errorMessage)
     }
 
     if (data.token && (data.customer || data.user)) {
@@ -295,13 +306,16 @@ export async function login(email: string, password: string): Promise<AuthRespon
         token: data.token,
       }
 
+      console.log("[v0] Login successful, user data:", authResponse.user)
       return authResponse
     }
 
     // If no token or user data, throw error
-    throw new Error(data.message || "Login failed - missing required data")
+    const errorMessage = data.message || "Login failed - missing required data"
+    console.error("[v0] Login failed - missing token or user data:", data)
+    throw new Error(errorMessage)
   } catch (error) {
-    console.error("Error logging in:", error)
+    console.error("[v0] Error logging in:", error)
     throw error
   }
 }
