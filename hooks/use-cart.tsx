@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { addToCart as apiAddToCart, type Cart, type CartItem } from "@/lib/api"
+import { fetchProduct, type Cart, type CartItem } from "@/lib/api"
 
 interface UseCartReturn {
   cart: Cart | null
@@ -11,10 +11,12 @@ interface UseCartReturn {
   clearCart: () => void
   getTotal: () => number
   getItemCount: () => number
+  isLoading: boolean
 }
 
 export function useCart(): UseCartReturn {
   const [cart, setCart] = useState<Cart | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -37,57 +39,68 @@ export function useCart(): UseCartReturn {
   }, [cart])
 
   const addToCart = async (productId: string, quantity = 1) => {
+    console.log("[v0] Adding to cart:", { productId, quantity })
+    setIsLoading(true)
+
     try {
-      // Try API first
-      const apiCart = await apiAddToCart(productId, quantity)
-      if (apiCart) {
-        setCart(apiCart)
-        return
-      }
+      const product = await fetchProduct(productId)
+      console.log("[v0] Product fetched for cart:", product)
+
+      setCart((prevCart) => {
+        if (!prevCart) {
+          const newCart = {
+            id: `local-${Date.now()}`,
+            items: [
+              {
+                productId,
+                name: product.name,
+                price: product.price,
+                quantity,
+                subtotal: product.price * quantity,
+                thumbnail: product.thumbnail,
+                sku: product.sku,
+              },
+            ],
+            total: product.price * quantity,
+          }
+          console.log("[v0] Created new cart:", newCart)
+          return newCart
+        }
+
+        const existingItem = prevCart.items.find((item) => item.productId === productId)
+        if (existingItem) {
+          const updatedItems = prevCart.items.map((item) =>
+            item.productId === productId
+              ? { ...item, quantity: item.quantity + quantity, subtotal: item.price * (item.quantity + quantity) }
+              : item,
+          )
+          const total = updatedItems.reduce((sum, item) => sum + item.subtotal, 0)
+          const updatedCart = { ...prevCart, items: updatedItems, total }
+          console.log("[v0] Updated existing item in cart:", updatedCart)
+          return updatedCart
+        } else {
+          const newItem: CartItem = {
+            productId,
+            name: product.name,
+            price: product.price,
+            quantity,
+            subtotal: product.price * quantity,
+            thumbnail: product.thumbnail,
+            sku: product.sku,
+          }
+          const updatedItems = [...prevCart.items, newItem]
+          const total = updatedItems.reduce((sum, item) => sum + item.subtotal, 0)
+          const updatedCart = { ...prevCart, items: updatedItems, total }
+          console.log("[v0] Added new item to cart:", updatedCart)
+          return updatedCart
+        }
+      })
     } catch (error) {
-      console.warn("API add to cart failed, using local cart:", error)
+      console.error("[v0] Failed to add product to cart:", error)
+      throw error
+    } finally {
+      setIsLoading(false)
     }
-
-    // Fallback to local cart management
-    setCart((prevCart) => {
-      if (!prevCart) {
-        return {
-          id: `local-${Date.now()}`,
-          items: [
-            {
-              productId,
-              name: `Product ${productId}`,
-              price: 0, // Will be updated when product details are fetched
-              quantity,
-              subtotal: 0,
-            },
-          ],
-          total: 0,
-        }
-      }
-
-      const existingItem = prevCart.items.find((item) => item.productId === productId)
-      if (existingItem) {
-        const updatedItems = prevCart.items.map((item) =>
-          item.productId === productId
-            ? { ...item, quantity: item.quantity + quantity, subtotal: item.price * (item.quantity + quantity) }
-            : item,
-        )
-        const total = updatedItems.reduce((sum, item) => sum + item.subtotal, 0)
-        return { ...prevCart, items: updatedItems, total }
-      } else {
-        const newItem: CartItem = {
-          productId,
-          name: `Product ${productId}`,
-          price: 0,
-          quantity,
-          subtotal: 0,
-        }
-        const updatedItems = [...prevCart.items, newItem]
-        const total = updatedItems.reduce((sum, item) => sum + item.subtotal, 0)
-        return { ...prevCart, items: updatedItems, total }
-      }
-    })
   }
 
   const removeFromCart = (productId: string) => {
@@ -144,5 +157,6 @@ export function useCart(): UseCartReturn {
     clearCart,
     getTotal,
     getItemCount,
+    isLoading,
   }
 }
