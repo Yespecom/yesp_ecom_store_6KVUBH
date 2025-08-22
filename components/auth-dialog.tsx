@@ -119,6 +119,10 @@ export function AuthDialog() {
 
       await login(email, password, recaptchaToken)
       setIsOpen(false)
+      // Force a re-render by dispatching a custom event
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("auth-state-changed"))
+      }, 100)
     } catch (error) {
       console.log("[v0] Login error caught in component:", error)
       // Error is handled by the useAuth hook
@@ -157,6 +161,10 @@ export function AuthDialog() {
 
       await register({ name, email, password, recaptchaToken })
       setIsOpen(false)
+      // Force a re-render by dispatching a custom event
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("auth-state-changed"))
+      }, 100)
     } catch (error) {
       console.log("[v0] Signup error caught in component:", error)
     }
