@@ -1,114 +1,80 @@
-import { Facebook, Twitter, Instagram, Youtube } from "lucide-react"
 import Link from "next/link"
+import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react"
 
 export function Footer() {
   return (
-    <footer className="bg-card border-t border-border">
+    <footer className="bg-gray-900 text-white">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Company Info */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand Section */}
           <div className="space-y-4">
-            <h3 className="text-xl font-black font-montserrat text-primary">Earthy Aromas</h3>
-            <p className="text-muted-foreground">
-              Your trusted destination for premium aromatic products with natural ingredients and exceptional quality.
+            <h3 className="text-2xl font-bold">Earthy Aromas</h3>
+            <p className="text-gray-300 text-sm leading-relaxed">
+              Discover the power of nature with our premium collection of essential oils, aromatherapy products, and
+              natural wellness solutions.
             </p>
             <div className="flex space-x-4">
-              <Facebook className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-all duration-200 hover:scale-110" />
-              <Twitter className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-all duration-200 hover:scale-110" />
-              <Instagram className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-all duration-200 hover:scale-110" />
-              <Youtube className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-all duration-200 hover:scale-110" />
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Facebook className="h-5 w-5" />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Twitter className="h-5 w-5" />
+              </a>
             </div>
           </div>
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-foreground">Quick Links</h4>
-            <ul className="space-y-2">
+            <h4 className="text-lg font-semibold">Quick Links</h4>
+            <ul className="space-y-2 text-sm">
               <li>
-                <Link
-                  href="/"
-                  className="text-muted-foreground hover:text-primary transition-all duration-200 hover:translate-x-1 inline-block"
-                >
+                <Link href="/" className="text-gray-300 hover:text-white transition-colors">
                   Home
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/search"
-                  className="text-muted-foreground hover:text-primary transition-all duration-200 hover:translate-x-1 inline-block"
-                >
-                  Products
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/#categories"
-                  className="text-muted-foreground hover:text-primary transition-all duration-200 hover:translate-x-1 inline-block"
-                >
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/about"
-                  className="text-muted-foreground hover:text-primary transition-all duration-200 hover:translate-x-1 inline-block"
-                >
+                <Link href="/about" className="text-gray-300 hover:text-white transition-colors">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/contact"
-                  className="text-muted-foreground hover:text-primary transition-all duration-200 hover:translate-x-1 inline-block"
-                >
+                <Link href="/contact" className="text-gray-300 hover:text-white transition-colors">
                   Contact
+                </Link>
+              </li>
+              <li>
+                <Link href="/cart" className="text-gray-300 hover:text-white transition-colors">
+                  Cart
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Customer Service */}
+          {/* Categories */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-foreground">Customer Service</h4>
-            <ul className="space-y-2">
+            <h4 className="text-lg font-semibold">Categories</h4>
+            <ul className="space-y-2 text-sm">
               <li>
-                <Link
-                  href="/contact"
-                  className="text-muted-foreground hover:text-primary transition-all duration-200 hover:translate-x-1 inline-block"
-                >
-                  Help Center
+                <Link href="/category/essential-oils" className="text-gray-300 hover:text-white transition-colors">
+                  Essential Oils
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/contact"
-                  className="text-muted-foreground hover:text-primary transition-all duration-200 hover:translate-x-1 inline-block"
-                >
-                  Shipping Info
+                <Link href="/category/candles" className="text-gray-300 hover:text-white transition-colors">
+                  Aromatherapy Candles
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/contact"
-                  className="text-muted-foreground hover:text-primary transition-all duration-200 hover:translate-x-1 inline-block"
-                >
-                  Returns
+                <Link href="/category/diffusers" className="text-gray-300 hover:text-white transition-colors">
+                  Diffusers
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/contact"
-                  className="text-muted-foreground hover:text-primary transition-all duration-200 hover:translate-x-1 inline-block"
-                >
-                  Size Guide
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-muted-foreground hover:text-primary transition-all duration-200 hover:translate-x-1 inline-block"
-                >
-                  Track Order
+                <Link href="/category/gift-sets" className="text-gray-300 hover:text-white transition-colors">
+                  Gift Sets
                 </Link>
               </li>
             </ul>
@@ -116,19 +82,27 @@ export function Footer() {
 
           {/* Contact Info */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-foreground">Contact Info</h4>
-            <div className="space-y-2 text-muted-foreground">
-              <p className="transition-colors duration-200 hover:text-foreground">123 Aromatic Street</p>
-              <p className="transition-colors duration-200 hover:text-foreground">Natural Valley, NY 10001</p>
-              <p className="transition-colors duration-200 hover:text-foreground">Phone: (555) 123-4567</p>
-              <p className="transition-colors duration-200 hover:text-foreground">Email: hello@earthyaromas.com</p>
+            <h4 className="text-lg font-semibold">Contact Info</h4>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center space-x-3">
+                <Mail className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-300">info@earthyaromas.com</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Phone className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-300">+91 9876543210</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <MapPin className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-300">Mumbai, Maharashtra, India</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
-          <p className="transition-colors duration-200 hover:text-foreground">
-            &copy; 2024 Earthy Aromas. All rights reserved.
+        <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+          <p className="text-gray-400 text-sm">
+            © 2024 Earthy Aromas. All rights reserved. | Privacy Policy | Terms of Service
           </p>
         </div>
       </div>
