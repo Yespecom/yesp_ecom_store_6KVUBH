@@ -6,7 +6,7 @@ import { login as apiLogin, register as apiRegister, type User } from "@/lib/api
 interface UseAuthReturn {
   user: User | null
   isAuthenticated: () => boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string, recaptchaToken?: string) => Promise<void>
   register: (userData: {
     name: string
     email: string
@@ -40,12 +40,12 @@ export function useAuth(): UseAuthReturn {
     }
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, recaptchaToken?: string) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const response = await apiLogin(email, password)
+      const response = await apiLogin(email, password, recaptchaToken)
       if (response && response.success) {
         setUser(response.user)
         localStorage.setItem("auth_user", JSON.stringify(response.user))
