@@ -42,8 +42,7 @@ export default function CartPage() {
       alert("Please login to proceed with checkout")
       return
     }
-    // TODO: Implement checkout flow
-    alert("Checkout functionality coming soon!")
+    window.location.href = "/checkout"
   }
 
   if (!cart || cart.items.length === 0) {
