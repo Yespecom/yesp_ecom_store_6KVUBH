@@ -11,18 +11,10 @@ import { fetchProducts, fetchCategories } from "@/lib/api"
 function LoadingScreen() {
   return (
     <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
-      <div className="text-center animate-fade-in">
-        <div className="relative mb-6">
-          <div className="w-12 h-12 border-3 border-muted border-t-primary rounded-full animate-spin mx-auto"></div>
-          <div className="absolute inset-0 w-12 h-12 border-2 border-primary/20 rounded-full animate-pulse mx-auto"></div>
-        </div>
-        <h1 className="text-2xl font-bold text-foreground mb-2 animate-slide-up">Earthy Aromas</h1>
-        <p className="text-sm text-muted-foreground animate-slide-up" style={{ "--stagger": "1" } as any}>
-          Loading your store...
-        </p>
-        <div className="mt-4 w-32 h-1 bg-muted rounded-full mx-auto overflow-hidden">
-          <div className="h-full bg-primary rounded-full animate-pulse"></div>
-        </div>
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-muted border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+        <h1 className="text-xl font-semibold text-foreground">Earthy Aromas</h1>
+        <p className="text-sm text-muted-foreground mt-2">Loading your store...</p>
       </div>
     </div>
   )
@@ -51,7 +43,8 @@ export default function HomePage() {
           categories,
         })
 
-        await new Promise((resolve) => setTimeout(resolve, 800))
+        // Add minimum loading time for smooth UX
+        await new Promise((resolve) => setTimeout(resolve, 1500))
 
         console.log("[v0] Loading complete, showing application")
         setIsLoading(false)
@@ -71,21 +64,13 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="animate-fade-in">
-        <Header />
-      </div>
-      <main className="animate-slide-up" style={{ "--stagger": "1" } as any}>
+      <Header />
+      <main>
         <HeroSection />
-        <div className="animate-slide-up" style={{ "--stagger": "2" } as any}>
-          <FeaturedProducts preloadedProducts={appData.products} />
-        </div>
-        <div className="animate-slide-up" style={{ "--stagger": "3" } as any}>
-          <Newsletter />
-        </div>
+        <FeaturedProducts preloadedProducts={appData.products} />
+        <Newsletter />
       </main>
-      <div className="animate-fade-in" style={{ "--stagger": "4" } as any}>
-        <Footer />
-      </div>
+      <Footer />
     </div>
   )
 }
