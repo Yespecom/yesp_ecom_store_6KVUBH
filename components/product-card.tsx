@@ -16,6 +16,7 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isImageLoading, setIsImageLoading] = useState(true)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
   const { addToCart } = useCart()
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
 
@@ -31,12 +32,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    setIsAddingToCart(true)
     try {
       console.log("[v0] Adding product to cart:", product._id)
       await addToCart(product._id, 1)
       console.log("[v0] Product added to cart successfully")
+
+      const button = e.currentTarget as HTMLButtonElement
+      const originalText = button.textContent
+      button.textContent = "Added!"
+      button.classList.add("bg-green-500", "hover:bg-green-600")
+
+      setTimeout(() => {
+        button.textContent = originalText
+        button.classList.remove("bg-green-500", "hover:bg-green-600")
+      }, 1500)
     } catch (error) {
       console.error("[v0] Failed to add product to cart:", error)
+    } finally {
+      setIsAddingToCart(false)
     }
   }
 
@@ -76,9 +90,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <span className="ml-1 text-sm font-medium text-gray-900">{product.rating}</span>
         </div>
       )}
-      <Button onClick={handleAddToCart} variant="default">
+      <Button
+        onClick={handleAddToCart}
+        variant="default"
+        disabled={isAddingToCart}
+        className="transition-all duration-200 hover:scale-105"
+      >
         <ShoppingCart size={16} className="mr-2" />
-        Add to Cart
+        {isAddingToCart ? "Adding..." : "Add to Cart"}
       </Button>
       <Button onClick={handleWishlistToggle} variant="default">
         {isWishlisted ? (
