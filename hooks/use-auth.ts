@@ -49,6 +49,7 @@ export function useAuth(): UseAuthReturn {
       if (response && response.success) {
         setUser(response.user)
         localStorage.setItem("auth_user", JSON.stringify(response.user))
+        localStorage.setItem("auth_token", response.token)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
@@ -72,6 +73,7 @@ export function useAuth(): UseAuthReturn {
       if (response && response.success) {
         setUser(response.user)
         localStorage.setItem("auth_user", JSON.stringify(response.user))
+        localStorage.setItem("auth_token", response.token)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed")
