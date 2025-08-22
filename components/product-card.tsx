@@ -16,7 +16,7 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isImageLoading, setIsImageLoading] = useState(true)
-  const { addItem } = useCart()
+  const { addToCart } = useCart()
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
 
   const isWishlisted = isInWishlist(product._id)
@@ -28,16 +28,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     window.location.href = `/product/${product.slug}`
   }
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    addItem({
-      id: product._id,
-      name: product.name,
-      price: product.price,
-      image: product.images[0] || "/placeholder.svg?height=200&width=200",
-      quantity: 1,
-    })
+    try {
+      console.log("[v0] Adding product to cart:", product._id)
+      await addToCart(product._id, 1)
+      console.log("[v0] Product added to cart successfully")
+    } catch (error) {
+      console.error("[v0] Failed to add product to cart:", error)
+    }
   }
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
@@ -50,7 +50,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         productId: product._id,
         name: product.name,
         price: product.price,
-        thumbnail: product.images[0] || "/placeholder.svg?height=200&width=200",
+        thumbnail: product.thumbnail || "/placeholder.svg?height=200&width=200",
       })
     }
   }
@@ -58,7 +58,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <div onClick={handleCardClick} className="product-card">
       <Image
-        src={product.images[0] || "/placeholder.svg?height=200&width=200"}
+        src={product.thumbnail || "/placeholder.svg?height=200&width=200"}
         alt={product.name}
         width={200}
         height={200}
