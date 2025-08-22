@@ -27,7 +27,6 @@ export function Header() {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isWishlistOpen, setIsWishlistOpen] = useState(false)
   const [showMobileSearch, setShowMobileSearch] = useState(false)
-  const [forceUpdate, setForceUpdate] = useState(0)
   const { getItemCount } = useCart()
   const { getItemCount: getWishlistCount } = useWishlist()
   const { user, logout, isAuthenticated } = useAuth()
@@ -47,26 +46,6 @@ export function Header() {
 
     loadCategories()
   }, [])
-
-  useEffect(() => {
-    const handleAuthStateChange = () => {
-      console.log("[v0] Auth state change event received, forcing header re-render")
-      setForceUpdate((prev) => prev + 1)
-    }
-
-    window.addEventListener("auth-state-changed", handleAuthStateChange)
-    return () => {
-      window.removeEventListener("auth-state-changed", handleAuthStateChange)
-    }
-  }, [])
-
-  useEffect(() => {
-    console.log("[v0] Header auth state:", {
-      isAuthenticated: isAuthenticated(),
-      user: user?.name || "none",
-      forceUpdate,
-    })
-  }, [isAuthenticated, user, forceUpdate])
 
   const handleLogout = () => {
     logout()
