@@ -55,11 +55,14 @@ export default function ProductDetailPage() {
       toast({
         title: "Added to Cart",
         description: `${quantity} ${product.name} added to cart!`,
+        variant: "default",
       })
+      setQuantity(1)
     } catch (error) {
+      console.error("[v0] Failed to add product to cart:", error)
       toast({
         title: "Error",
-        description: "Failed to add product to cart.",
+        description: "Failed to add product to cart. Please try again.",
         variant: "destructive",
       })
     }
@@ -262,7 +265,7 @@ export default function ProductDetailPage() {
 
             <div className="space-y-3">
               <Button
-                className="w-full bg-orange-400 hover:bg-orange-500 text-white font-medium py-3"
+                className="w-full bg-orange-400 hover:bg-orange-500 text-white font-medium py-3 transition-all duration-200 hover:scale-105"
                 onClick={handleAddToCart}
                 disabled={cartLoading || !product.isActive}
                 size="lg"
@@ -272,7 +275,7 @@ export default function ProductDetailPage() {
                 ) : (
                   <ShoppingCart className="h-5 w-5 mr-2" />
                 )}
-                {!product.isActive ? "Currently Unavailable" : "Add to Cart"}
+                {!product.isActive ? "Currently Unavailable" : cartLoading ? "Adding to Cart..." : "Add to Cart"}
               </Button>
             </div>
 
