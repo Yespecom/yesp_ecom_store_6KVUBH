@@ -1,11 +1,14 @@
 "use client"
 
-import { useCart } from "@/hooks/useCart"
-import { useAuth } from "@/hooks/useAuth"
+import { useCart, useAuth } from "@/hooks"
 import { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, ShoppingBag, Sparkles, Minus, Plus, Trash2 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle, Badge, Button, Input, Separator } from "@/components/ui"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
 import { AuthDialog } from "@/components/auth-dialog"
 
 export default function CartPage() {
