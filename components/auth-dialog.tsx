@@ -17,7 +17,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
-import { useToast } from "@/hooks/use-toast"
 
 const loadRecaptchaScript = async () => {
   return new Promise<string>((resolve, reject) => {
@@ -73,7 +72,6 @@ export function AuthDialog() {
   const [recaptchaLoading, setRecaptchaLoading] = useState(true)
   const [recaptchaAvailable, setRecaptchaAvailable] = useState(false)
   const { login, register, isLoading, error } = useAuth()
-  const { toast } = useToast()
 
   useEffect(() => {
     setRecaptchaLoading(true)
@@ -120,11 +118,6 @@ export function AuthDialog() {
       }
 
       await login(email, password, recaptchaToken)
-      toast({
-        title: "Welcome back!",
-        description: "You have been logged in successfully.",
-        variant: "default",
-      })
       setIsOpen(false)
       // Force a re-render by dispatching a custom event
       setTimeout(() => {
@@ -132,33 +125,7 @@ export function AuthDialog() {
       }, 100)
     } catch (error) {
       console.log("[v0] Login error caught in component:", error)
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred"
-
-      if (errorMessage.includes("Invalid credentials") || errorMessage.includes("wrong password")) {
-        toast({
-          title: "Login Failed",
-          description: "Invalid email or password. Please check your credentials and try again.",
-          variant: "destructive",
-        })
-      } else if (errorMessage.includes("User not found")) {
-        toast({
-          title: "Account Not Found",
-          description: "No account found with this email address. Please sign up first.",
-          variant: "destructive",
-        })
-      } else if (errorMessage.includes("Too many attempts")) {
-        toast({
-          title: "Too Many Attempts",
-          description: "Too many failed login attempts. Please try again later.",
-          variant: "destructive",
-        })
-      } else {
-        toast({
-          title: "Login Error",
-          description: errorMessage,
-          variant: "destructive",
-        })
-      }
+      // Error is handled by the useAuth hook
     }
   }
 
@@ -193,11 +160,6 @@ export function AuthDialog() {
       }
 
       await register({ name, email, password, recaptchaToken })
-      toast({
-        title: "Account Created Successfully!",
-        description: "Welcome to Earthy Aromas! You can now start shopping.",
-        variant: "default",
-      })
       setIsOpen(false)
       // Force a re-render by dispatching a custom event
       setTimeout(() => {
@@ -205,39 +167,6 @@ export function AuthDialog() {
       }, 100)
     } catch (error) {
       console.log("[v0] Signup error caught in component:", error)
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred"
-
-      if (errorMessage.includes("Email already exists") || errorMessage.includes("already registered")) {
-        toast({
-          title: "Email Already Registered",
-          description: "An account with this email already exists. Please try logging in instead.",
-          variant: "destructive",
-        })
-      } else if (errorMessage.includes("Password too weak") || errorMessage.includes("password requirements")) {
-        toast({
-          title: "Weak Password",
-          description: "Password must be at least 8 characters long with letters and numbers.",
-          variant: "destructive",
-        })
-      } else if (errorMessage.includes("Invalid email")) {
-        toast({
-          title: "Invalid Email",
-          description: "Please enter a valid email address.",
-          variant: "destructive",
-        })
-      } else if (errorMessage.includes("Name is required")) {
-        toast({
-          title: "Name Required",
-          description: "Please enter your full name to create an account.",
-          variant: "destructive",
-        })
-      } else {
-        toast({
-          title: "Registration Failed",
-          description: errorMessage,
-          variant: "destructive",
-        })
-      }
     }
   }
 
