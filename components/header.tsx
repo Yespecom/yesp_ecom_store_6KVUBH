@@ -27,12 +27,17 @@ export function Header() {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isWishlistOpen, setIsWishlistOpen] = useState(false)
   const [showMobileSearch, setShowMobileSearch] = useState(false)
-  const { getItemCount } = useCart()
+  const [forceUpdate, setForceUpdate] = useState(0)
+  const { cart, getItemCount } = useCart()
   const { getItemCount: getWishlistCount } = useWishlist()
   const { user, logout, isAuthenticated } = useAuth()
-  const cartCount = getItemCount()
+  const cartCount = cart?.items?.reduce((count, item) => count + item.quantity, 0) || 0
   const wishlistCount = getWishlistCount()
   const pathname = usePathname()
+
+  useEffect(() => {
+    console.log("[v0] Cart state changed:", { cartCount, cartItems: cart?.items?.length || 0 })
+  }, [cart, cartCount])
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -46,6 +51,26 @@ export function Header() {
 
     loadCategories()
   }, [])
+
+  useEffect(() => {
+    const handleAuthStateChange = () => {
+      console.log("[v0] Auth state change event received, forcing header re-render")
+      setForceUpdate((prev) => prev + 1)
+    }
+
+    window.addEventListener("auth-state-changed", handleAuthStateChange)
+    return () => {
+      window.removeEventListener("auth-state-changed", handleAuthStateChange)
+    }
+  }, [])
+
+  useEffect(() => {
+    console.log("[v0] Header auth state:", {
+      isAuthenticated: isAuthenticated(),
+      user: user?.name || "none",
+      forceUpdate,
+    })
+  }, [isAuthenticated, user, forceUpdate])
 
   const handleLogout = () => {
     logout()
