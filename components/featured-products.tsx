@@ -1,168 +1,232 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Star, ShoppingCart, Heart } from "lucide-react"
+"use client"
 
-interface Product {
-  id: string
-  name: string
-  price: number
-  originalPrice?: number
-  rating: number
-  reviews: number
-  image: string
-  category: string
-  isNew?: boolean
-  isBestseller?: boolean
+import type React from "react"
+
+import { useEffect, useState, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { ProductSkeleton } from "@/components/product-skeleton"
+import { LoadingSpinner } from "@/components/loading-spinner"
+import { Star, Heart, ShoppingCart } from "lucide-react"
+import { fetchProducts, type Product } from "@/lib/api"
+import { useCart } from "@/hooks/use-cart"
+import { useToast } from "@/hooks/use-toast"
+
+interface FeaturedProductsProps {
+  preloadedProducts?: Product[]
 }
 
-const featuredProducts: Product[] = [
-  {
-    id: "1",
-    name: "Lavender Essential Oil",
-    price: 899,
-    originalPrice: 1199,
-    rating: 4.8,
-    reviews: 124,
-    image: "/placeholder-41qsw.png",
-    category: "Essential Oils",
-    isBestseller: true,
-  },
-  {
-    id: "2",
-    name: "Rose Aromatherapy Candle",
-    price: 799,
-    rating: 4.6,
-    reviews: 89,
-    image: "/rose-aromatherapy-candle.png",
-    category: "Candles",
-    isNew: true,
-  },
-  {
-    id: "3",
-    name: "Eucalyptus Diffuser Oil",
-    price: 699,
-    originalPrice: 899,
-    rating: 4.7,
-    reviews: 156,
-    image: "/placeholder-htr3e.png",
-    category: "Diffuser Oils",
-  },
-  {
-    id: "4",
-    name: "Aromatherapy Gift Set",
-    price: 1999,
-    originalPrice: 2499,
-    rating: 4.9,
-    reviews: 203,
-    image: "/aromatherapy-gift-set.png",
-    category: "Gift Sets",
-    isBestseller: true,
-  },
-]
+export function FeaturedProducts({ preloadedProducts }: FeaturedProductsProps) {
+  const [products, setProducts] = useState<Product[]>([])
+  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const { addToCart } = useCart()
+  const { toast } = useToast()
+  const router = useRouter()
 
-export function FeaturedProducts({ preloadedProducts }: { preloadedProducts?: any[] }) {
-  // Use preloaded products if available, otherwise fall back to static data
-  const products = preloadedProducts && preloadedProducts.length > 0 ? preloadedProducts.slice(0, 4) : featuredProducts
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        let fetchedProducts: Product[]
+        if (preloadedProducts && preloadedProducts.length > 0) {
+          fetchedProducts = preloadedProducts
+        } else {
+          fetchedProducts = await fetchProducts()
+        }
+
+        setProducts(fetchedProducts.slice(0, 20))
+        setDisplayedProducts(fetchedProducts.slice(0, 3))
+      } catch (error) {
+        console.error("Failed to load products:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load products. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadProducts()
+  }, [toast, preloadedProducts]) // Added preloadedProducts to dependency array
+
+  const loadMoreProducts = useCallback(() => {
+    if (loadingMore || displayedProducts.length >= products.length) return
+
+    setLoadingMore(true)
+    setTimeout(() => {
+      const currentCount = displayedProducts.length
+      const nextBatch = products.slice(currentCount, currentCount + 3)
+      setDisplayedProducts((prev) => [...prev, ...nextBatch])
+      setLoadingMore(false)
+    }, 800)
+  }, [loadingMore, displayedProducts.length, products])
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (entry.isIntersecting && !loadingMore && displayedProducts.length < products.length) {
+          loadMoreProducts()
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "100px",
+      },
+    )
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current)
+    }
+
+    return () => {
+      if (loadMoreRef.current) {
+        observer.unobserve(loadMoreRef.current)
+      }
+    }
+  }, [loadMoreProducts, loadingMore, displayedProducts.length, products.length])
+
+  const handleAddToCart = async (productId: string, event: React.MouseEvent) => {
+    event.stopPropagation()
+
+    try {
+      await addToCart(productId, 1)
+      toast({
+        title: "Success",
+        description: "Product added to cart!",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add product to cart.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleProductClick = (productSlug: string) => {
+    router.push(`/product/${productSlug}`)
+  }
+
+  if (loading) {
+    return (
+      <section className="py-16 lg:py-24">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12 animate-in fade-in-0 slide-in-from-top-4 duration-500">
+            <h2 className="text-3xl lg:text-4xl font-bold font-montserrat text-foreground mb-4">Our Products</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Discover our premium collection of aromatic products crafted with natural ingredients.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <ProductSkeleton key={i} index={i} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 lg:py-24">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Featured Products</h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Discover our most popular aromatherapy products, carefully selected for their quality and effectiveness
+        <div className="text-center mb-12 animate-in fade-in-0 slide-in-from-top-4 duration-500">
+          <h2 className="text-3xl lg:text-4xl font-bold font-montserrat text-foreground mb-4">Our Products</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Discover our premium collection of aromatic products crafted with natural ingredients.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {products.map((product) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {displayedProducts.map((product, index) => (
             <Card
-              key={product.id}
-              className="group hover:shadow-xl transition-all duration-300 hover:scale-105 border-0 shadow-lg bg-white/80 backdrop-blur-sm"
+              key={product._id}
+              className="group hover:shadow-lg transition-all duration-300 border-border cursor-pointer animate-in fade-in-0 slide-in-from-bottom-4 duration-500 hover:-translate-y-1"
+              style={{ animationDelay: `${index * 100}ms` }}
+              onClick={() => handleProductClick(product.slug)}
             >
               <CardContent className="p-0">
                 <div className="relative overflow-hidden rounded-t-lg">
                   <img
-                    src={product.image || "/placeholder.svg"}
+                    src={product.thumbnail || "/placeholder.svg?height=256&width=256&query=product"}
                     alt={product.name}
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
+                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute top-4 left-4 flex flex-col gap-2">
-                    {product.isNew && <Badge className="bg-green-500 text-white">New</Badge>}
-                    {product.isBestseller && <Badge className="bg-orange-500 text-white">Bestseller</Badge>}
-                  </div>
-                  <div className="absolute top-4 right-4">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="bg-white/80 hover:bg-white text-gray-600 hover:text-red-500 rounded-full"
-                    >
-                      <Heart className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground animate-in slide-in-from-left-2 duration-300">
+                    {index === 0 ? "Best Seller" : index === 1 ? "New" : index === 2 ? "Sale" : "Popular"}
+                  </Badge>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute top-3 right-3 bg-background/80 hover:bg-background transition-all duration-200 hover:scale-110"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Heart className="h-4 w-4" />
+                  </Button>
                 </div>
 
-                <div className="p-6">
-                  <div className="mb-2">
-                    <span className="text-sm text-gray-500">{product.category}</span>
+                <div className="p-4 space-y-3">
+                  <div className="space-y-1">
+                    <h3 className="font-semibold text-foreground line-clamp-2">{product.name}</h3>
+                    <div className="flex items-center space-x-1">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-3 w-3 transition-colors duration-200 ${i < 4 ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs text-muted-foreground">(4.5)</span>
+                    </div>
                   </div>
 
-                  <h3 className="font-semibold text-lg text-gray-900 mb-2 group-hover:text-green-600 transition-colors">
-                    {product.name}
-                  </h3>
-
-                  <div className="flex items-center mb-3">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < Math.floor(product.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
-                          }`}
-                        />
-                      ))}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-bold text-foreground">₹{product.price}</span>
+                      {product.originalPrice > product.price && (
+                        <span className="text-sm text-muted-foreground line-through">₹{product.originalPrice}</span>
+                      )}
                     </div>
-                    <span className="text-sm text-gray-500 ml-2">
-                      {product.rating} ({product.reviews})
+                    <span className="text-xs text-muted-foreground">
+                      {product.trackQuantity ? "In Stock" : product.stockStatus}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl font-bold text-gray-900">₹{product.price}</span>
-                      {product.originalPrice && (
-                        <span className="text-lg text-gray-500 line-through">₹{product.originalPrice}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <Link href={`/product/${product.id}`} className="flex-1">
-                      <Button className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg">
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        Add to Cart
-                      </Button>
-                    </Link>
-                  </div>
+                  <Button
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 hover:scale-[1.02]"
+                    onClick={(e) => handleAddToCart(product._id, e)}
+                    disabled={!product.isActive}
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    {!product.isActive ? "Unavailable" : "Add to Cart"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
+
+          {loadingMore && [...Array(3)].map((_, i) => <ProductSkeleton key={`loading-${i}`} index={i} />)}
         </div>
 
-        <div className="text-center mt-12">
-          <Link href="/category/all">
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-green-600 text-green-600 hover:bg-green-50 px-8 py-3 rounded-xl transition-all duration-300 hover:scale-105 bg-transparent"
-            >
-              View All Products
-            </Button>
-          </Link>
-        </div>
+        {displayedProducts.length < products.length && (
+          <div ref={loadMoreRef} className="h-20 flex items-center justify-center mt-8">
+            {loadingMore && (
+              <div className="flex items-center text-muted-foreground">
+                <LoadingSpinner size="sm" className="mr-2" />
+                Loading more products...
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   )
