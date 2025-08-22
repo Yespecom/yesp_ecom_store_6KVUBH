@@ -261,12 +261,30 @@ export async function register(userData: {
   }
 }
 
-export async function login(email: string, password: string): Promise<AuthResponse | null> {
+export async function login(email: string, password: string, recaptchaToken?: string): Promise<AuthResponse | null> {
   try {
-    console.log("[v0] Login attempt with:", { email, password: password ? "[PROVIDED]" : "[MISSING]" })
+    console.log("[v0] Login attempt with:", {
+      email,
+      password: password ? "[PROVIDED]" : "[MISSING]",
+      recaptchaToken: recaptchaToken ? "[TOKEN]" : "none",
+    })
 
-    const requestBody = { email, password }
-    console.log("[v0] Login request body:", { email, password: "[REDACTED]" })
+    console.log("[v0] recaptchaToken type:", typeof recaptchaToken)
+    console.log("[v0] recaptchaToken value:", recaptchaToken ? "EXISTS" : "NULL/UNDEFINED")
+    console.log("[v0] recaptchaToken length:", recaptchaToken ? recaptchaToken.length : "N/A")
+
+    const requestBody = {
+      email,
+      password,
+      ...(recaptchaToken && { recaptchaToken }),
+    }
+
+    console.log("[v0] Login request body structure:", {
+      email: "PROVIDED",
+      password: "PROVIDED",
+      hasRecaptchaToken: !!requestBody.recaptchaToken,
+      recaptchaTokenLength: requestBody.recaptchaToken ? requestBody.recaptchaToken.length : 0,
+    })
 
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
