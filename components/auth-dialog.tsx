@@ -70,6 +70,7 @@ export function AuthDialog() {
   const [showPassword, setShowPassword] = useState(false)
   const [siteKey, setSiteKey] = useState<string>("")
   const [recaptchaLoading, setRecaptchaLoading] = useState(true)
+  const [recaptchaAvailable, setRecaptchaAvailable] = useState(false)
   const { login, register, isLoading, error } = useAuth()
 
   useEffect(() => {
@@ -77,11 +78,13 @@ export function AuthDialog() {
     loadRecaptchaScript()
       .then((key) => {
         setSiteKey(key)
+        setRecaptchaAvailable(true)
         setRecaptchaLoading(false)
         console.log("[v0] reCAPTCHA initialized successfully")
       })
       .catch((error) => {
         console.error("[v0] reCAPTCHA initialization failed:", error)
+        setRecaptchaAvailable(false)
         setRecaptchaLoading(false)
       })
   }, [])
@@ -92,10 +95,32 @@ export function AuthDialog() {
     const email = formData.get("email") as string
     const password = formData.get("password") as string
 
+    console.log("[v0] Login form data:", { email, password: password ? "[REDACTED]" : "empty" })
+
     try {
-      await login(email, password)
+      let recaptchaToken = null
+
+      if (recaptchaAvailable && siteKey) {
+        if (!window.grecaptcha || !window.grecaptcha.execute) {
+          throw new Error("reCAPTCHA service not available. Please check your internet connection and try again.")
+        }
+
+        console.log("[v0] Executing reCAPTCHA for login with site key:", siteKey)
+        recaptchaToken = await window.grecaptcha.execute(siteKey, { action: "login" })
+
+        if (!recaptchaToken) {
+          throw new Error("Failed to generate reCAPTCHA token. Please try again.")
+        }
+
+        console.log("[v0] reCAPTCHA v3 token generated for login")
+      } else {
+        console.log("[v0] reCAPTCHA not available, proceeding without verification")
+      }
+
+      await login(email, password, recaptchaToken)
       setIsOpen(false)
     } catch (error) {
+      console.log("[v0] Login error caught in component:", error)
       // Error is handled by the useAuth hook
     }
   }
@@ -111,26 +136,24 @@ export function AuthDialog() {
     console.log("[v0] Signup form data:", { name, email, password: password ? "[REDACTED]" : "empty" })
 
     try {
-      if (!siteKey) {
-        throw new Error("reCAPTCHA configuration not loaded. Please refresh the page and try again.")
+      let recaptchaToken = null
+
+      if (recaptchaAvailable && siteKey) {
+        if (!window.grecaptcha || !window.grecaptcha.execute) {
+          throw new Error("reCAPTCHA service not available. Please check your internet connection and try again.")
+        }
+
+        console.log("[v0] Executing reCAPTCHA with site key:", siteKey)
+        recaptchaToken = await window.grecaptcha.execute(siteKey, { action: "register" })
+
+        if (!recaptchaToken) {
+          throw new Error("Failed to generate reCAPTCHA token. Please try again.")
+        }
+
+        console.log("[v0] reCAPTCHA v3 token generated for registration")
+      } else {
+        console.log("[v0] reCAPTCHA not available, proceeding without verification")
       }
-
-      if (!window.grecaptcha || !window.grecaptcha.execute) {
-        throw new Error("reCAPTCHA service not available. Please check your internet connection and try again.")
-      }
-
-      if (recaptchaLoading) {
-        throw new Error("reCAPTCHA is still loading. Please wait a moment and try again.")
-      }
-
-      console.log("[v0] Executing reCAPTCHA with site key:", siteKey)
-      const recaptchaToken = await window.grecaptcha.execute(siteKey, { action: "register" })
-
-      if (!recaptchaToken) {
-        throw new Error("Failed to generate reCAPTCHA token. Please try again.")
-      }
-
-      console.log("[v0] reCAPTCHA v3 token generated for registration")
 
       await register({ name, email, password, recaptchaToken })
       setIsOpen(false)
@@ -265,6 +288,12 @@ export function AuthDialog() {
               {error && <p className="text-sm text-red-600">{error}</p>}
 
               {recaptchaLoading && <p className="text-sm text-gray-500">Loading security verification...</p>}
+
+              {!recaptchaLoading && !recaptchaAvailable && (
+                <p className="text-sm text-amber-600 bg-amber-50 p-2 rounded">
+                  ⚠️ Security verification is not configured. Please contact support if you encounter issues.
+                </p>
+              )}
 
               <Button
                 type="submit"
