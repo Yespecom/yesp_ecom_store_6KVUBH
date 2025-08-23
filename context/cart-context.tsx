@@ -43,10 +43,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     try {
       const product = await fetchProduct(productId)
+      if (!product) {
+        throw new Error("Product not found")
+      }
 
       setCart((prevCart) => {
         if (!prevCart) {
-          const newCart = {
+          const newCart: Cart = {
             id: `local-${Date.now()}`,
             items: [
               {
@@ -55,8 +58,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 price: product.price,
                 quantity,
                 subtotal: product.price * quantity,
-                thumbnail: product.thumbnail,
-                sku: product.sku,
               },
             ],
             total: product.price * quantity,
@@ -80,8 +81,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
             price: product.price,
             quantity,
             subtotal: product.price * quantity,
-            thumbnail: product.thumbnail,
-            sku: product.sku,
           }
           const updatedItems = [...prevCart.items, newItem]
           const total = updatedItems.reduce((sum, item) => sum + item.subtotal, 0)
