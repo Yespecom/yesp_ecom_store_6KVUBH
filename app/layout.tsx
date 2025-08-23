@@ -4,11 +4,15 @@ import { Inter, Montserrat } from "next/font/google"
 import { Suspense } from "react"
 import "./globals.css"
 import { ScrollingAdBanner } from "@/components/scrolling-ad-banner"
+import { AuthProvider } from "@/contexts/auth-context"
+import { CartProvider } from "@/contexts/cart-context"
+import { WishlistProvider } from "@/contexts/wishlist-context"
 
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
+  preload: true,
 })
 
 const montserrat = Montserrat({
@@ -16,6 +20,7 @@ const montserrat = Montserrat({
   display: "swap",
   variable: "--font-montserrat",
   weight: ["400", "600", "700", "900"],
+  preload: true,
 })
 
 export const metadata: Metadata = {
@@ -44,8 +49,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${montserrat.variable} antialiased`}>
       <body className="font-sans">
-        <ScrollingAdBanner />
-        <Suspense fallback={<LoadingScreen />}>{children}</Suspense>
+        <AuthProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <ScrollingAdBanner />
+              <Suspense fallback={<LoadingScreen />}>{children}</Suspense>
+            </WishlistProvider>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   )
