@@ -12,17 +12,19 @@ interface WishlistItem {
 
 interface WishlistContextType {
   items: WishlistItem[]
-  addToWishlist: (item: Omit<WishlistItem, "addedAt">) => void
+  addToWishlist: (productId: string) => Promise<void>
   removeFromWishlist: (productId: string) => void
   clearWishlist: () => void
   isInWishlist: (productId: string) => boolean
   getItemCount: () => number
+  isLoading: boolean
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined)
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<WishlistItem[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const savedWishlist = localStorage.getItem("wishlist")
@@ -40,13 +42,36 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("wishlist", JSON.stringify(items))
   }, [items])
 
-  const addToWishlist = (item: Omit<WishlistItem, "addedAt">) => {
-    setItems((prevItems) => {
-      const exists = prevItems.some((wishlistItem) => wishlistItem.productId === item.productId)
-      if (exists) return prevItems
+  const addToWishlist = async (productId: string) => {
+    setIsLoading(true)
+    try {
+      const { fetchProduct } = await import("@/lib/api")
+      const product = await fetchProduct(productId)
 
-      return [...prevItems, { ...item, addedAt: new Date().toISOString() }]
-    })
+      if (!product) {
+        throw new Error("Product not found")
+      }
+
+      setItems((prevItems) => {
+        const exists = prevItems.some((wishlistItem) => wishlistItem.productId === productId)
+        if (exists) return prevItems
+
+        const newItem: WishlistItem = {
+          productId,
+          name: product.name,
+          price: product.price,
+          thumbnail: product.thumbnail,
+          addedAt: new Date().toISOString(),
+        }
+
+        return [...prevItems, newItem]
+      })
+    } catch (error) {
+      console.error("Failed to add to wishlist:", error)
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const removeFromWishlist = (productId: string) => {
@@ -75,6 +100,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         clearWishlist,
         isInWishlist,
         getItemCount,
+        isLoading,
       }}
     >
       {children}
