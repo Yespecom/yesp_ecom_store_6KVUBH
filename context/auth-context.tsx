@@ -26,7 +26,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Load user from localStorage on mount
   useEffect(() => {
     const token = localStorage.getItem("auth_token")
     const savedUser = localStorage.getItem("auth_user")
@@ -35,9 +34,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const parsedUser = JSON.parse(savedUser)
         setUser(parsedUser)
-        console.log("[v0] Auth state loaded on mount:", parsedUser.name)
       } catch (error) {
-        console.error("[v0] Failed to parse saved user:", error)
+        console.error("Failed to parse saved user:", error)
         localStorage.removeItem("auth_token")
         localStorage.removeItem("auth_user")
       }
@@ -47,18 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string, recaptchaToken?: string) => {
     setIsLoading(true)
     setError(null)
-    console.log("[v0] Login attempt for:", email)
 
     try {
       const response = await apiLogin(email, password, recaptchaToken)
       if (response && response.success) {
-        console.log("[v0] Login successful, updating global state:", response.user.name)
         setUser(response.user)
         localStorage.setItem("auth_user", JSON.stringify(response.user))
         localStorage.setItem("auth_token", response.token)
       }
     } catch (err) {
-      console.error("[v0] Login error:", err)
       setError(err instanceof Error ? err.message : "Login failed")
     } finally {
       setIsLoading(false)
@@ -74,18 +69,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }) => {
     setIsLoading(true)
     setError(null)
-    console.log("[v0] Registration attempt for:", userData.email)
 
     try {
       const response = await apiRegister(userData)
       if (response && response.success) {
-        console.log("[v0] Registration successful, updating global state:", response.user.name)
         setUser(response.user)
         localStorage.setItem("auth_user", JSON.stringify(response.user))
         localStorage.setItem("auth_token", response.token)
       }
     } catch (err) {
-      console.error("[v0] Registration error:", err)
       setError(err instanceof Error ? err.message : "Registration failed")
     } finally {
       setIsLoading(false)
@@ -93,16 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = () => {
-    console.log("[v0] Logging out user:", user?.name)
     setUser(null)
     localStorage.removeItem("auth_token")
     localStorage.removeItem("auth_user")
   }
 
   const isAuthenticated = () => {
-    const authenticated = !!user && !!localStorage.getItem("auth_token")
-    console.log("[v0] Auth check:", authenticated, user?.name || "no user")
-    return authenticated
+    return !!user && !!localStorage.getItem("auth_token")
   }
 
   return (
