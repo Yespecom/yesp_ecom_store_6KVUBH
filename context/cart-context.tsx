@@ -20,7 +20,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Cart | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Load cart from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem("cart")
     if (savedCart) {
@@ -33,7 +32,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Save cart to localStorage whenever it changes
   useEffect(() => {
     if (cart) {
       localStorage.setItem("cart", JSON.stringify(cart))
@@ -41,12 +39,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [cart])
 
   const addToCart = async (productId: string, quantity = 1) => {
-    console.log("[v0] Adding to cart:", { productId, quantity })
     setIsLoading(true)
 
     try {
       const product = await fetchProduct(productId)
-      console.log("[v0] Product fetched for cart:", product)
 
       setCart((prevCart) => {
         if (!prevCart) {
@@ -65,7 +61,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
             ],
             total: product.price * quantity,
           }
-          console.log("[v0] Created new cart:", newCart)
           return newCart
         }
 
@@ -77,9 +72,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
               : item,
           )
           const total = updatedItems.reduce((sum, item) => sum + item.subtotal, 0)
-          const updatedCart = { ...prevCart, items: updatedItems, total }
-          console.log("[v0] Updated existing item in cart:", updatedCart)
-          return updatedCart
+          return { ...prevCart, items: updatedItems, total }
         } else {
           const newItem: CartItem = {
             productId,
@@ -92,13 +85,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
           }
           const updatedItems = [...prevCart.items, newItem]
           const total = updatedItems.reduce((sum, item) => sum + item.subtotal, 0)
-          const updatedCart = { ...prevCart, items: updatedItems, total }
-          console.log("[v0] Added new item to cart:", updatedCart)
-          return updatedCart
+          return { ...prevCart, items: updatedItems, total }
         }
       })
     } catch (error) {
-      console.error("[v0] Failed to add product to cart:", error)
+      console.error("Failed to add product to cart:", error)
       throw error
     } finally {
       setIsLoading(false)
