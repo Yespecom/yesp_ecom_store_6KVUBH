@@ -4,9 +4,9 @@ import { Inter, Montserrat } from "next/font/google"
 import { Suspense } from "react"
 import "./globals.css"
 import { ScrollingAdBanner } from "@/components/scrolling-ad-banner"
-import { AuthProvider } from "@/contexts/auth-context"
-import { CartProvider } from "@/contexts/cart-context"
-import { WishlistProvider } from "@/contexts/wishlist-context"
+import { AuthProvider } from "@/context/auth-context"
+import { CartProvider } from "@/context/cart-context"
+import { WishlistProvider } from "@/context/wishlist-context"
 
 const inter = Inter({
   subsets: ["latin"],
