@@ -1,1 +1,1 @@
-export { useWishlist } from "@/contexts/wishlist-context"
+export { useWishlist } from "@/context/wishlist-context"
