@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
+      throw err
     } finally {
       setIsLoading(false)
     }
@@ -79,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed")
+      throw err
     } finally {
       setIsLoading(false)
     }
